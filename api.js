@@ -1,5 +1,7 @@
+const fs = require('fs')
 const fetch = require('node-fetch');
 var parser = require('xml2json');
+const form_data = require('form-data');
 module.exports = class API3Scale {
   constructor(adminEndpoint, providerKey) {
     this.adminEndpoint = adminEndpoint;
@@ -49,23 +51,48 @@ module.exports = class API3Scale {
       .then(res => res.json())
   }
 
-  fileGetById() {
-
-  }
 
   getFileById(id) {
     return fetch(`${this.baseUrl}/${this.kindKey['file']}/${id}.json?provider_key=${this.providerKey}`)
       .then(res => res.json())
   }
 
-  createFile() {
-
+  createFile(file) {
+    const form = new form_data();
+    if (file.downloadable) {
+      form.append('downloadable', file.downloadable);
+    }
+    form.append('attachment', fs.createReadStream(file.file_path));
+    form.append('path', file.path);
+    delete file.file_path;
+    return fetch(`${this.baseUrl}/${this.kindKey['file']}.json?provider_key=${this.providerKey}`, {
+      method: 'POST',
+      headers: form.getHeaders(),
+      body: form,
+    })
+      .then(res => res.buffer())
+      .then(result => console.log(result.toString()))
   }
 
-  updateFile() {
-
+  updateFile(file) {
+    const form = new form_data();
+    if (file.section_id) {
+      form.append('section_id', file.section_id);
+    }
+    if (file.downloadable) {
+      form.append('downloadable', file.downloadable);
+    }
+    form.append('attachment', fs.createReadStream(file.file_path));
+    form.append('path', file.path);
+    return fetch(`${this.baseUrl}/${this.kindKey['file']}/${file.id}.json?provider_key=${this.providerKey}`, {
+      method: 'PUT',
+      headers: form.getHeaders(),
+      body: form,
+    })
+      .then((res) => {
+        console.log(res)
+      })
   }
-
 
 
   parseListResponse(values, kind) {
