@@ -2,6 +2,8 @@
   "name": "3scale-cms-node",
   "version": "1.0.0",
   "dependencies": {
+    "form-data": "^2.3.3",
+    "fs-extra": "^7.0.1",
     "node-fetch": "^2.3.0",
     "xml2json": "^0.11.2"
   }
