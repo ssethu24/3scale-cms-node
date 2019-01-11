@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const path = require('path');
 const parser = require('xml2json');
 const fs = require('fs');
 const form_data = require('form-data');
@@ -147,42 +148,34 @@ module.exports = class API3Scale {
   }
 
   getTemplateById(id) {
-    return fetch(`${this.baseUrl}/${this.kindKey['template']}/${id}.json?provider_key=${this.providerKey}`)
-      .then(res => res.json())
-      .then(json => console.log(json))
-      .catch(error => console.log);
+    return fetch(`${this.baseUrl}/${this.kindKey['template']}/${id}.xml?provider_key=${this.providerKey}`)
+      .then(res => res.buffer())
+      .then(xml => parser.toJson(xml.toString(), { object: true }))
+
   }
 
   createTemplate(template) {
-    template.provider_key = this.providerKey;
-    template.draft = fs.readFileSync(template.filename, 'utf8');
-    return fetch(`${this.baseUrl}/${this.kindKey['template']}.json`, {
+    template.draft = fs.readFileSync(template.filePath, 'utf8');
+    return fetch(`${this.baseUrl}/${this.kindKey['template']}.json?provider_key=${this.providerKey}`, {
       method: 'post',
       headers: {
-        'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(template)
     })
       .then(res => res.json())
-      .then(json => console.log(json))
-      .catch(error => console.log);
   }
 
-  updateTemplate(template) {
-    template.provider_key = this.providerKey;
-    template.draft = fs.readFileSync(template.filename, 'utf8');
-    return fetch(`${this.baseUrl}/${this.kindKey['template']}/${template.id}.json`, {
+  updateTemplate(id, template) {
+    template.draft = fs.readFileSync(template.filePath, 'utf8');
+    return fetch(`${this.baseUrl}/${this.kindKey['template']}/${id}.json?provider_key=${this.providerKey}`, {
       method: 'put',
       headers: {
-        'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(template)
     })
       .then(res => res.json())
-      .then(json => console.log(json))
-      .catch(error => console.log);
   }
 
   deleteTemplate(template) {
@@ -200,6 +193,68 @@ module.exports = class API3Scale {
       .catch(error => console.log);
   }
 
+  fetchFileFromUrl(url) {
+    url = url.startsWith('http') ? url : `${this.adminEndpoint}${url}`;
+    return fetch(url)
+      .then(res => res.text())
+  }
+
+  createLayout(layout) {
+    const template = {
+      type: 'layout',
+      title: layout.title,
+      system_name: layout.system_name,
+      liquid_enabled: layout.liquid_enabled ? layout.liquid_enabled : false,
+      filePath: layout.filePath,
+    };
+    return this.createTemplate(template).then(outTemplate => outTemplate.layout);
+  }
+
+  updateLayout(id, layout) {
+    const template = {
+      title: layout.title,
+      system_name: layout.system_name,
+      liquid_enabled: layout.liquid_enabled ? layout.liquid_enabled : false,
+      filePath: layout.filePath,
+    };
+    return this.updateTemplate(id, template).then(outTemplate => outTemplate.layout);
+  }
+
+  createPartial(partial) {
+    const template = {
+      type: 'partial',
+      system_name: partial.system_name,
+      filePath: partial.filePath,
+    };
+    return this.createTemplate(template).then(outTemplate => outTemplate.layout);
+  }
+
+  updatePartial(id, partial) {
+    const template = {
+      system_name: partial.system_name,
+      filePath: partial.filePath,
+    };
+    return this.updateTemplate(id, template).then(outTemplate => outTemplate.layout);
+  }
+
+  updateBuiltInPartial(id, partial) {
+    const template = {
+      filePath: partial.filePath,
+    };
+    return this.updateTemplate(id, template).then(outTemplate => outTemplate.layout);
+  }
+
+  updateBuiltinPage(id, builtinPage) {
+    const template = {
+      //layout_name: builtinPage.layout_name,
+      filePath: builtinPage.filePath,
+    };
+    return this.updateTemplate(id, template).then(outTemplate => outTemplate.layout);
+  }
+
+
+
+  /** private method **/
   parseListResponse(values, kind) {
     const results = [];
     ['layout', 'builtin_page', 'builtin_partial', 'partial', 'page', 'file', 'section'].forEach((key) => {
@@ -212,7 +267,7 @@ module.exports = class API3Scale {
         }
         templates.forEach((template) => {
           template._type = key;
-          template._parenntType = kind;
+          template._parentType = kind;
           results.push(template);
         })
       }
