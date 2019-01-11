@@ -1,14 +1,15 @@
 const API = require('./api');
 
 
-
+const api = new API('https://3scale-uat11-admin.uat.bluescape.com', 'e7e34f125f');
 
 /*api.list('section').then((results) => {
     // console.log(JSON.stringify(results));
 });*/
 
-// api.createSection({partial_path: "/test", parent_id: "28", title: "Test", public: 1})
-// api.updateSection({id: "203", partial_path: "/new", parent_id: "28", title: "Test", public: 1})
+// api.createSection({partial_path: "/test", parent_id: "28", title: "Test6", public: 1, system_name: "test_new3"}).then(console.log)
+
+api.updateParentIdSection(231, {parent_id: 230});
 //  api.deleteSection({id: "203"});
 // api.getSectionById(203);
 
@@ -24,4 +25,4 @@ const API = require('./api');
 //   })
 // api.delete('file','108');
 
-api.getTemplateById(315).then(console.log)
+//api.getTemplateById(315).then(console.log)

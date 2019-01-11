@@ -23,7 +23,7 @@ const DEST_DICT = {
     section: new Map(),
 };
 
-const api = new API('','');
+const api = new API('https://3scale-uat11-admin.uat.bluescape.com', '45c6c0face34f125f');
 
 
 function buildPathKey(sections) {
@@ -68,6 +68,7 @@ async function syncSectionToCloud(srcSections, destSections) {
                 public: srcSection.public,
                 partial_path: srcSection.partial_path,
                 title: srcSection.title,
+                system_name: srcSection.system_name,
             };
             const section = await api.createSection(params);
             updateHashMap(section);
@@ -75,7 +76,7 @@ async function syncSectionToCloud(srcSections, destSections) {
         }
     }
 
-    srcSections.forEach(async (section) => {
+    for (const section of srcSections) {
         const params = {
             public: section.public,
             partial_path: section.partial_path,
@@ -92,15 +93,18 @@ async function syncSectionToCloud(srcSections, destSections) {
             params.id = destSection.id;
             params.system_name = destSection.system_name;
             updateHashMap(params);
-        } else {
+        }
+        else {
+            params.system_name = section.system_name;
             //create
             if (!_.isEmpty(section.parent_id)) {
                 params.parent_id = await syncParentSections(section.parent_id);
             }
-            const section = await api.createSection(params);
-            updateHashMap(section);
+            const newSection = await api.createSection(params);
+            updateHashMap(newSection);
         }
-    });
+    }
+
 }
 
 function preProcessUploadTemplate(type, srcTemplates, destTemplates) {
