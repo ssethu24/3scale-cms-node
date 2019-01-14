@@ -1,5 +1,6 @@
 const API = require('./api');
 const Section = require('./section');
+const Layout = require('./layout');
 const WRK_DIR = '../api-portal-documentation/CMS/';
 const api = new API('https://3scale-uat13-admin.uat.bluescape.com', '35aa72cd8f9907e018a1d3f4d0818d9ca03d8e4dabfa719ea6df3ed27cfd3f94');
 const path = require('path');
@@ -8,6 +9,7 @@ const fse = require('fs-extra');
 const _ = require('lodash');
 
 const SECTION = new Section();
+const LAYOUT = new Layout();
 /*api.list('section').then((results) => {
      console.log(JSON.stringify(results));
 });*/
@@ -117,3 +119,22 @@ async function deleteAndCreate(api) {
 }
 
 deleteAndCreate(api);
+
+/**
+ *
+ * We need to Iterate the local Dir and find the .meta.json
+ * after get the list of .meta.json
+ * We need to trivial the object like layout,page,builtin_page,partials, partial
+ * we need to call 2 remote API and cache as locally  1.Sections & Templates (layout)
+ *
+ * Upload Process : layout
+ * 1st we need to upload the layout. because other object will use layout name so it will get error
+ * Before create layout we need to check that layout already exits in remote base Key: system_name
+ * If exits we need to update if not then create layout
+ *  We need to check same object in remote base if not create else update the content & meta if you can.
+ * Upload Process : Partials
+ * Upload Process: Sections
+ * Upload Process: BuiltInPage
+ * Upload Process: Page
+ * Upload Process: File
+ */
