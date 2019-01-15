@@ -45,57 +45,108 @@ const getMetaFileLocation = function (dir, filelist = []) {
     return filelist;
 };
 
+
 async function iterateSource(WRK_DIR) {
     const fileList = await getMetaFileLocation(WRK_DIR);
-
+    const trivialElemts = await trivialElements(fileList);
     let destSections = await api.list('section');
     SECTION.load(destSections);
     // console.log(SECTION.PP)
-    for (const file of fileList) {
-        const sections = (file.split('/')).slice(3, -1);
-        let _root = '';
-        let _parent = null;
-        if (!_.isEmpty(sections)) {
-            for (const section of sections) {
-                const _lower = section.replace(/\s+/g, '_').toLowerCase();
-                _root += '/' + _lower;
-
-                const oldSection = SECTION.getSectionByPartialPath(_root);
-                // console.log('oldSection', _root, oldSection)
-                if (!oldSection) {
-                    let params = {partial_path: "/" + _lower, title: section, system_name: _lower};
-                    if (_parent) {
-                        params.parent_id = _parent.parent_id;
+    for (const ele of trivialElemts) {
+        for (const eles in ele) {
+            ele[eles].forEach(async element => {
+                const sections = (element.file_path.split('/')).slice(3, -1);
+                let _root = '';
+                let _parent = null;
+                if (!_.isEmpty(sections)) {
+                    for (const section of sections) {
+                        const _lower = section.replace(/\s+/g, '_').toLowerCase();
+                        _root += '/' + _lower;
+                        const oldSection = SECTION.getSectionByPartialPath(_root);
+                        // console.log('oldSection', _root, oldSection)
+                        if (!oldSection) {
+                            let params = {partial_path: "/" + _lower, title: section, system_name: _lower};
+                            if (_parent) {
+                                params.parent_id = _parent.parent_id;
+                            }
+                            _parent = await api.createSection(params);
+                            SECTION.addOrUpdateSection(_parent);
+                        } else {
+                            _parent = oldSection;
+                        }
+                        element.section_id = _parent ? _parent.id : null;
+                        await fileCreateOrUpdate(element, _root);
                     }
-                    _parent = await api.createSection(params);
-                    SECTION.addOrUpdateSection(_parent);
-                } else {
-                    _parent = oldSection;
                 }
-            }
-        }
-        const json = await fse.readJson(`${file}`);
-        for (const element of json) {
-
-            element.section_id = _parent ? _parent.id : null;
-            await fileCreateOrUpdate(element, _root);
-
+            });
         }
     }
 }
 
+async function trivialElements(fileList) {
+    const layout = [];
+    const files = [];
+    const builtin_page = [];
+    const page = [];
+    const partial = [];
+    for (const file of fileList) {
+        const json = await fse.readJson(`${file}`);
+        for (const element of json) {
+            element.file_path = file;
+            switch (element.type) {
+                case 'layout':
+                    layout.push(element);
+                    break;
+                case 'file':
+                    files.push(element);
+                    break;
+                case 'page':
+                    page.push(element);
+                    break;
+                case 'partial':
+                    partial.push(element);
+                    break;
+                case 'builtin_page':
+                    builtin_page.push(element);
+                    break;
+            }
+        }
+    }
+    return [{layout}, {page}, {files}, {partial}, {builtin_page}];
+}
+
 async function fileCreateOrUpdate(element, file) {
+    let page;
+    let fP;
+    fP = (element.file_path.split('/')).slice(0, -1);
+    element.filePath = fP.push(element.file_name);
+    element.filePath = fP.join('/');
     switch (element.type) {
         case 'page':
-            element.path = file + element.path;
-            const page = await api.createTemplate(element);
+            element.path = file;
+            page = await api.createTemplate(element);
             console.log(element, page);
             break;
-        case 'layout':
+        case 'builtin_page':
+            element.path = file;
+            let builtJson = await fse.readJson(`./built_in.json`);
+            builtJson = await _.keyBy(builtJson, 'system_name');
+            page = await api.updateBuiltinPage(builtJson[element.system_name].id, element);
+            console.log(element, page);
             break;
         case 'partial':
+            element.path = file;
+            api.createPartial(element);
+            break;
+        case 'layout':
+            delete element.file_path;
+            element.path = '/layouts';
+            page = await api.createLayout(element);
+            console.log(element, page);
             break;
         case 'file':
+            page = await api.createFile(element);
+            console.log(element, page);
             break;
         default:
     }
@@ -119,6 +170,8 @@ async function deleteAndCreate(api) {
 }
 
 deleteAndCreate(api);
+// const filelist = getMetaFileLocation(WRK_DIR);
+// console.log(trivialElements(filelist));
 
 /**
  *

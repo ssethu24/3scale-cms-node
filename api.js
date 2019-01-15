@@ -63,7 +63,7 @@ module.exports = class API3Scale {
     }
 
     createFile(file) {
-        console.log('cr', file)
+        // console.log('cr', file)
         const form = new form_data();
         // form.append('downloadable', file.downloadable || 0);
         if (file.section_id) {
