@@ -1,7 +1,7 @@
 const API = require('./api');
 const Section = require('./section');
 const Layout = require('./layout');
-const WRK_DIR = '../api-portal-documentation/CMS/';
+const WRK_DIR = '../api-portal-documentation';
 const api = new API('https://3scale-uat13-admin.uat.bluescape.com', '35aa72cd8f9907e018a1d3f4d0818d9ca03d8e4dabfa719ea6df3ed27cfd3f94');
 const path = require('path');
 const fs = require('fs');
@@ -63,20 +63,23 @@ async function iterateSource(WRK_DIR) {
                         const _lower = section.replace(/\s+/g, '_').toLowerCase();
                         _root += '/' + _lower;
                         const oldSection = SECTION.getSectionByPartialPath(_root);
-                        // console.log('oldSection', _root, oldSection)
                         if (!oldSection) {
                             let params = {partial_path: "/" + _lower, title: section, system_name: _lower};
                             if (_parent) {
                                 params.parent_id = _parent.parent_id;
                             }
-                            _parent = await api.createSection(params);
-                            SECTION.addOrUpdateSection(_parent);
+                            if (element.type === 'page' || element.type === 'section') {
+                                _parent = await api.createSection(params);
+                                SECTION.addOrUpdateSection(_parent);
+                            }
                         } else {
                             _parent = oldSection;
                         }
                         element.section_id = _parent ? _parent.id : null;
                         await fileCreateOrUpdate(element, _root);
                     }
+                } else {
+                    await fileCreateOrUpdate(element, '/');
                 }
             });
         }
@@ -125,28 +128,28 @@ async function fileCreateOrUpdate(element, file) {
         case 'page':
             element.path = file;
             page = await api.createTemplate(element);
-            console.log(element, page);
             break;
         case 'builtin_page':
             element.path = file;
             let builtJson = await fse.readJson(`./built_in.json`);
             builtJson = await _.keyBy(builtJson, 'system_name');
-            page = await api.updateBuiltinPage(builtJson[element.system_name].id, element);
-            console.log(element, page);
+            if (builtJson[element.system_name]) {
+                page = await api.updateBuiltinPage(builtJson[element.system_name].id, element);
+            } else {
+                page = await api.createTemplate(element);
+            }
             break;
         case 'partial':
             element.path = file;
-            api.createPartial(element);
+            await api.createPartial(element);
             break;
         case 'layout':
             delete element.file_path;
             element.path = '/layouts';
             page = await api.createLayout(element);
-            console.log(element, page);
             break;
         case 'file':
             page = await api.createFile(element);
-            console.log(element, page);
             break;
         default:
     }
@@ -156,7 +159,6 @@ async function flush(api) {
     this.type = ['file', 'template', 'section'];
     for (const key of this.type) {
         const results = await api.list(key);
-        console.log(results);
         for (const result of results) {
             console.log('\n\n', result.id)
             await api.delete(key, result.id);
@@ -165,13 +167,14 @@ async function flush(api) {
 }
 
 async function deleteAndCreate(api) {
-    // await flush(api);
-    await iterateSource(WRK_DIR);
+    await flush(api);
+    await iterateSource(`${WRK_DIR}/layouts`);
+    await iterateSource(`${WRK_DIR}/partial`);
+    await iterateSource(`${WRK_DIR}/builtin_page`);
+    await iterateSource(`${WRK_DIR}/pages`);
 }
 
 deleteAndCreate(api);
-// const filelist = getMetaFileLocation(WRK_DIR);
-// console.log(trivialElements(filelist));
 
 /**
  *
