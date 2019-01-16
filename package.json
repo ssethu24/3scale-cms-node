@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "upload": "node ./upload.js",
+    "upload": "node ./index.js",
     "download": "node ./download.js",
     "flush": "node ./flush.js",
     "verify": "node ./verify.js"

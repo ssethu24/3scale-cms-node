@@ -15,12 +15,12 @@ const config = convict({
   threeScale: {
     portalEndpoint: {
       format: 'String',
-      default: 'https://3scale-uat13-admin.uat.bluescape.com',
-      env: 'THREESCALE_ADMIN_ENDPOINT',
+      default: 'https://74241fecd91f4df43fc177a2041cc6f3a2f2708c1cb13045fd8d865742ca2862@3scale-uat1-admin.uat.bluescape.com',
+      env: 'THREESCALE_PORTAL_ENDPOINT',
     },
     accessToken: {
       format: 'String',
-      default: '35aa72cd8f9907e018a1d3f4d0818d9ca03d8e4dabfa719ea6df3ed27cfd3f94',
+      default: '',
       env: 'THREESCALE_ACCESS_TOKEN',
     },
   },

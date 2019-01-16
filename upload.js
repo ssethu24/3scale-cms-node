@@ -1,248 +1,182 @@
-const fse = require('fs-extra');
 const path = require('path');
-const _ = require('lodash');
-const API = require('./api');
-const Section = require('./model/section');
-const { getFileExt } = require('./utils');
+const fs = require('fs');
+const fse = require('fs-extra');
 
-const WRK_DIR = '../api-portal-documentation';
+const api = require('./api');
+const utils = require('./utils');
+const logger = require('./logger');
+const { Section, File, Layout, Partial, BuiltinPage } = require('./model');
 
-const GL_SEC_S = new Section();
-const GL_SEC_D = new Section();
-
-const api = new API('https://3scale-uat11-admin.uat.bluescape.com', '45c6ce7deec4b96c742f0face34f125f');
-
-
-function buildPathKey(sections) {
-  let keyMap = {};
-  const map = _.keyBy(sections, 'id');
-
-  function getRoot(sec) {
-    let findRoot = [];
-    findRoot.push(sec.system_name);
-    if (!_.isEmpty(sec.parent_id)) {
-      findRoot = findRoot.concat(getRoot(map[sec.parent_id]));
-    }
-    return findRoot;
+async function getSectionByPath(sectionPath, isTitle = false) {
+  let section = null;
+  if (isTitle) {
+    section = Section.getSectionByTitlePath(sectionPath);
+  } else {
+    section = Section.getSectionByPartialPath(sectionPath);
   }
-
-  sections.forEach(section => {
-    const pathKey = _.reverse(getRoot(section)).join('~~');
-    section._pathKey = pathKey;
-    keyMap[pathkey] = section;
-  });
-  return keyMap;
+  if (section) {
+    return section;
+  } else {
+    // create new Section
+    const sectionDirs = sectionPath.split('/');
+    const title = sectionDirs.pop();
+    const parent = await getSectionByPath(path.join('/', sectionDirs.join('/')), isTitle);
+    const systemName = sectionPath.replace(/\s+/g, '_').toLowerCase();
+    const section = {
+      partial_path: systemName,
+      parent_id: parent.id,
+      title: title,
+      public: true,
+      system_name: systemName,
+    };
+    const newSession = await api.createSection(section);
+    if (newSession.id) {
+      Section.addOrUpdateSection(newSession);
+    }
+    return newSession;
+  }
 }
 
-async function syncSectionToCloud(srcSections, destSections) {
-  //const srcPathKeyMap = buildPathKey(srcSections);
-  const destSNMap = _.keyBy(destSections, 'system_name');
-  const destIDMap = _.keyBy(destSections, 'id');
-  const srcIDMap = _.keyBy(srcSections, 'id');
-
-
-  function updateHashMap(section) {
-    destSNMap[section.system_name] = section;
-    destIDMap[section.id] = section;
+async function uploadLayouts(dir) {
+  let layouts = null;
+  try {
+    layouts = await fse.readJson(path.join(dir, '/layouts', '.meta.json'));
+    for (const layout of layouts) {
+      layout.filePath = path.join(dir, '/layouts/', layout.file_name);
+      const oldLayout = Layout.getBySystemName(layout.system_name);
+      if (oldLayout) {
+        logger.info("Update Layout", { systemName: layout.system_name });
+        await api.updateLayout(oldLayout.id, layout);
+      } else {
+        logger.info("Create New Layout", { systemName: layout.system_name });
+        const newLayout = await api.createLayout(layout);
+        Layout.addOrUpdate(newLayout);
+      }
+    }
+  } catch (error) {
+    logger.error("Layout Upload Error", error);
   }
+}
 
-  async function syncParentSections(sectionId) {
-    const srcSection = srcIDMap[sectionId];
-    if (destSNMap[srcSection.system_name]) {
-      return destSNMap[srcSection.system_name].id
-    } else {
-      const params = {
-        public: srcSection.public,
-        partial_path: srcSection.partial_path,
-        title: srcSection.title,
-        system_name: srcSection.system_name,
+async function uploadPartial(dir) {
+  const metaFiles = utils.getMetaFileLocation(path.join(dir, '/partial'));
+  for (const metaFile of metaFiles) {
+    const partials = await fse.readJson(metaFile);
+    for (const partial of partials) {
+      const oldPartial = Partial.getBySystemName(partial.system_name);
+      const dirPaths = metaFile.split('/');
+      dirPaths.pop();
+      partial.filePath = path.join(dirPaths.join('/'), partial.file_name);
+      if (oldPartial) {
+        logger.info("Update Partial", { systemName: partial.system_name });
+        await api.updatePartial(oldPartial.id, partial);
+      } else {
+        logger.info("Create New Partial", { systemName: partial.system_name });
+        const newLayout = await api.createPartial(partial);
+        Partial.addOrUpdate(newLayout);
+      }
+    }
+  }
+}
+
+
+async function syncFileCloud(file) {
+  const oldFile = File.getByPath(path.join(file.sectionPath, file.fileName));
+  file.path = path.join(file.sectionPath, file.fileName);
+  if (oldFile) {
+    // update file
+    logger.info("File UPDATE: Uploading", file.path);
+    await api.updateFile(oldFile.id, file);
+
+  } else {
+    //create
+    // find the sectionId
+    let section = await getSectionByPath(file.sectionPath);
+    file.section_id = section.id;
+    logger.info("Create New File now init", file.path);
+    await api.createFile(file);
+  }
+}
+
+async function uploadFile(dir, baseDir) {
+  const lists = fs.readdirSync(dir);
+  for (const list of lists) {
+    if (fs.statSync(path.join(dir, list)).isFile() && list[0] !== '.') {
+      const basePath = dir.split(baseDir)[1];
+      const file = {
+        sectionPath: basePath ? basePath : '/',
+        fileName: list,
+        filePath: path.join(dir, list)
       };
-      const section = await api.createSection(params);
-      updateHashMap(section);
-      return section.id;
+      await syncFileCloud(file);
+    } else if (fs.statSync(path.join(dir, list)).isDirectory()) {
+      await uploadFile(path.join(dir, list), baseDir);
     }
   }
-
-  for (const section of srcSections) {
-    const params = {
-      public: section.public,
-      partial_path: section.partial_path,
-      title: section.title,
-    };
-    if (destSNMap[section.system_name]) {
-      const destSection = destSNMap[section.system_name];
-      // update
-      if (!_.isEmpty(section.parent_id) && srcIDMap[section.parent_id].system_name !== destIDMap[destSection.parent_id].system_name) {
-        params.parent_id = await syncParentSections(section.parent_id);
-      }
-      //partial_path,public,title,parent_id
-      await api.updateSection(destSection.id, params);
-      params.id = destSection.id;
-      params.system_name = destSection.system_name;
-      updateHashMap(params);
-    } else {
-      params.system_name = section.system_name;
-      //create
-      if (!_.isEmpty(section.parent_id)) {
-        params.parent_id = await syncParentSections(section.parent_id);
-      }
-      const newSection = await api.createSection(params);
-      updateHashMap(newSection);
-    }
-  }
-
-}
-
-function preProcessUploadTemplate(type, srcTemplates, destTemplates) {
-  const templateKeys = ['system_name', 'content_type', 'title', 'liquid_enabled', 'handler', 'path', 'hidden', 'layout', 'content_type'];
-  const items = [];
-  const srcItems = srcTemplates.filter(template => template._type === type);
-  const destItems = destTemplates.filter(template => template._type === type);
-  const destItem = _.keyBy(destItems, 'system_name');
-  srcItems.forEach(item => {
-    const newItem = {};
-    templateKeys.forEach(key => {
-      if (item[key] && !_.isEmpty(item[key]) && (key === 'content_type' || !destItem[item.system_name] || item[key] !== destItem[item.system_name][key])) {
-        newItem[key] = item[key];
-      }
-    });
-    newItem._sysyemName = item.system_name;
-    if (destItem[item.system_name]) {
-      newItem._action = 'update';
-      newItem.id = destItem[item.system_name].id;
-    } else {
-      newItem._action = 'create';
-    }
-    items.push(newItem);
-  });
-  return items;
-}
-
-async function syncLayoutToCloud(layouts) {
-  layouts.forEach(async (layout) => {
-    layout.filePath = `${WRK_DIR}/templates/layout/${layout._sysyemName}.${getFileExt(layout.content_type)}`;
-    if (layout._action === 'update') {
-      await api.updateLayout(layout.id, layout);
-    } else {
-      const newLayout = await api.createLayout(layout);
-      DEST_DICT.layout.set(layout.system_name, newLayout);
-    }
-  });
-}
-
-async function syncBuiltinPartialToCloud(partials) {
-  partials.forEach(async (partial) => {
-    partial.filePath = `${WRK_DIR}/templates/builtin_partial/${partial._sysyemName}.${getFileExt(partial.content_type)}`;
-    if (partial._action === 'update') {
-      await api.updateBuiltInPartial(partial.id, partial);
-    } else {
-      // No create for builtIn Partial
-      //const newPartial = await api.createPartial(partial);
-      //DEST_DICT.builtin_partial.set(partial.system_name, newPartial);
-    }
-  });
-}
-
-async function syncPartialToCloud(partials) {
-  partials.forEach(async (partial) => {
-    partial.filePath = `${WRK_DIR}/templates/partial/${partial._sysyemName}.${getFileExt(partial.content_type)}`;
-    if (partial._action === 'update') {
-      await api.updatePartial(partial.id, partial);
-    } else {
-      const newPartial = await api.createPartial(partial);
-      DEST_DICT.partial.set(partial.system_name, newPartial);
-    }
-  });
-}
-
-async function syncBuiltinPageToCloud(layouts) {
-  layouts.forEach(async (layout) => {
-    layout.filePath = `${WRK_DIR}/templates/builtin_page/${layout._sysyemName}.${getFileExt(layout.content_type)}`;
-    if (layout._action === 'update') {
-      await api.updateBuiltinPage(layout.id, layout);
-    } else {
-      // No Creation
-    }
-  });
-}
-
-async function syncPageToCloud(layouts) {
-  layouts.forEach(async (layout) => {
-    layout.filePath = `${WRK_DIR}/templates/page/${layout._sysyemName}.${getFileExt(layout.content_type)}`;
-    if (layout._action === 'update') {
-      await api.updateBuiltinPage(layout.id, layout);
-    } else {
-      // No Creation
-    }
-  });
-}
-
-function getDestSectionId(srcId) {
-  const srcSystemName = GL_SEC_S.getSystemName(srcId);
-  const dest = GL_SEC_D.getBySystemName(srcSystemName);
-  return dest ? dest.id : null;
-}
-
-async function syncFileToCloud(files, destFiles) {
-  const destPathMap = _.keyBy(destFiles, 'path');
-  for (const file of files) {
-    const sectionId = getDestSectionId(file.section_id);
-    const params = {
-      section_id: sectionId,
-      tag_list: _.isEmpty(file.tag_list) ? '' : file.tag_list,
-      title: file.title,
-      filePath: file.title,
-      downloadable: file.downloadable,
-    };
-    params.path = file.path;
-    params.filePath = path.join(`${WRK_DIR}/files`, file.path);
-    if (destPathMap[file.path]) {
-      const dest = destPathMap[file.path];
-      console.log(dest.id)
-      //  await api.delete('file', dest.id);
-    }
-    const newFile = await api.createFile(params);
-    console.log(newFile);
-  }
-}
-
-async function upload() {
-
-  let destSections = await api.list('section');
-  GL_SEC_D.load(destSections);
-  const srcSections = await fse.readJson(`${WRK_DIR}/_sections.json`);
-  GL_SEC_S.load(srcSections);
-  // await syncSectionToCloud(srcSections, destSections);
-
-  //Fetch once again once sessions update
-  //destSections = await api.list('section');
-  // GL_SEC_D.load(destSections);
-  /*
-
-    const destTemplates = await api.list('template');
-    const srcTemplates = await fse.readJson(`${WRK_DIR}/_templates.json`);
-
-
-    const layouts = preProcessUploadTemplate('layout', srcTemplates, destTemplates);
-    await syncLayoutToCloud(layouts);
-    const partials = preProcessUploadTemplate('partial', srcTemplates, destTemplates);
-    await syncPartialToCloud(partials);
-    const builtinPartials = preProcessUploadTemplate('builtin_partial', srcTemplates, destTemplates);
-    await syncBuiltinPartialToCloud(builtinPartials);
-    const builtinPages = preProcessUploadTemplate('builtin_page', srcTemplates, destTemplates);
-    await syncBuiltinPartialToCloud(builtinPages);
-
-  */
-
-  // File Upload
-  const srcFiles = await fse.readJson(`${WRK_DIR}/_files.json`);
-  let destFiles = await api.list('file');
-  await syncFileToCloud(srcFiles, destFiles);
-
 };
 
-upload().then((result) => {
-  console.log(JSON.stringify(result));
-})
+
+async function uploadBuiltinPage(dir) {
+  const metaFiles = utils.getMetaFileLocation(path.join(dir, '/builtin_page'));
+  for (const metaFile of metaFiles) {
+    const builtinPages = await fse.readJson(metaFile);
+    const dirPaths = metaFile.split('/');
+    dirPaths.pop();
+    for (const builtinPage of builtinPages) {
+      const oldBuiltinPage = Partial.getBySystemName(builtinPage.system_name);
+      builtinPage.filePath = path.join(dirPaths.join('/'), builtinPage.file_name);
+      if (oldBuiltinPage) {
+        logger.info("Update Partial", { systemName: builtinPage.system_name });
+        await api.updateBuiltinPage(oldBuiltinPage.id, builtinPage);
+      } else {
+        logger.error("You can't create builtIn Page", { systemName: builtinPage.system_name });
+      }
+    }
+  }
+}
+
+async function uploadPage(dir) {
+  const basePath = path.join(dir, '/pages');
+  const metaFiles = utils.getMetaFileLocation(basePath);
+  for (const metaFile of metaFiles) {
+    const pages = await fse.readJson(metaFile);
+    let titlePath = metaFile.replace(basePath, '').replace('/.meta.json', '');
+    titlePath = titlePath ? titlePath : '/';
+    const section = await getSectionByPath(titlePath, true);
+    const dirPaths = metaFile.split('/');
+    dirPaths.pop();
+    for (const page of pages) {
+      //Find section and for this Path
+      page.filePath = path.join(dirPaths.join('/'), page.file_name);
+      page.section_id = section.id;
+      logger.info("Create Page", { sectionTitle: section.title, systemName: page.file_name });
+      await api.createPage(page);
+    }
+  }
+}
+
+async function upload(WRK_DIR) {
+  let templates = await api.list('template');
+  Layout.load(templates);
+  Partial.load(templates);
+  BuiltinPage.load(templates);
+  let destSections = await api.list('section');
+  Section.load(destSections);
 
 
+  await uploadLayouts(WRK_DIR);
+  await uploadPartial(WRK_DIR);
+
+  await uploadBuiltinPage(WRK_DIR);
+
+
+  await uploadPage(WRK_DIR);
+
+  let destFiles = await api.list('file');
+  File.load(destFiles);
+  const baseDirPath = path.join(WRK_DIR, '/files');
+  await uploadFile(baseDirPath, baseDirPath);
+
+}
+
+module.exports = upload;

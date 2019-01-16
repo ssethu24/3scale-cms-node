@@ -24,7 +24,6 @@ module.exports = class Section extends Base {
     } else {
       title += item.title + '/' + this.getTitlePathUtil(this.ID[item.parent_id]);
     }
-    console.log(title);
     return title
   }
 
