@@ -10,9 +10,9 @@ const { Section, File, Layout, Partial, BuiltinPage } = require('./model');
 async function getSectionByPath(sectionPath, isTitle = false) {
   let section = null;
   if (isTitle) {
-    section = Section.getSectionByPartialPath(sectionPath);
-  } else {
     section = Section.getSectionByTitlePath(sectionPath);
+  } else {
+    section = Section.getSectionByPartialPath(sectionPath);
   }
   if (section) {
     return section;
@@ -30,7 +30,9 @@ async function getSectionByPath(sectionPath, isTitle = false) {
       system_name: systemName,
     };
     const newSession = await api.createSection(section);
-    Section.addOrUpdateSection(newSession);
+    if (newSession) {
+      Section.addOrUpdateSection(newSession);
+    }
     return newSession;
   }
 }
@@ -140,9 +142,6 @@ async function uploadPage(dir) {
     const pages = await fse.readJson(metaFile);
     let titlePath = metaFile.replace(basePath, '').replace('/.meta.json', '');
     titlePath = titlePath ? titlePath : '/';
-
-    console.log(titlePath);
-    console.log(Section.TITLE_PATH[titlePath]);
     const section = await getSectionByPath(titlePath, true);
     const dirPaths = metaFile.split('/');
     dirPaths.pop();
@@ -157,23 +156,24 @@ async function uploadPage(dir) {
 }
 
 async function upload(WRK_DIR) {
-  /*  let templates = await api.list('template');
-    Layout.load(templates);
-    Partial.load(templates);
-    BuiltinPage.load(templates);*/
+  let templates = await api.list('template');
+  Layout.load(templates);
+  Partial.load(templates);
+  BuiltinPage.load(templates);
   let destSections = await api.list('section');
   Section.load(destSections);
 
-  /*  await uploadLayouts(WRK_DIR);
-    await uploadPartial(WRK_DIR);
+  await uploadLayouts(WRK_DIR);
+  await uploadPartial(WRK_DIR);
 
-    await uploadBuiltinPage(WRK_DIR);*/
+  await uploadBuiltinPage(WRK_DIR);
+
   await uploadPage(WRK_DIR);
 
-  /*  let destFiles = await api.list('file');
-    File.load(destFiles);
-    const baseDirPath = path.join(WRK_DIR, '/files');
-    await uploadFile(baseDirPath, baseDirPath);*/
+  let destFiles = await api.list('file');
+  File.load(destFiles);
+  const baseDirPath = path.join(WRK_DIR, '/files');
+  await uploadFile(baseDirPath, baseDirPath);
 }
 
 module.exports = upload;

@@ -19,16 +19,21 @@ module.exports = class Section extends Base {
 
   getTitlePathUtil(item) {
     let title = '';
-    if (_.isEmpty(item.parent_id)) {
-      title += ''
-    } else {
-      title += item.title + '/' + this.getTitlePathUtil(this.ID[item.parent_id]);
+    if (item) {
+      if (_.isEmpty(item.parent_id)) {
+        title += ''
+      } else {
+        title += item.title + '/' + this.getTitlePathUtil(this.ID[item.parent_id]);
+      }
+      return title
     }
-    return title
   }
 
   getTitlePath(item) {
-    return this.getTitlePathUtil(item).split('/').reverse().join('/');
+    if (item) {
+      return this.getTitlePathUtil(item).split('/').reverse().join('/');
+    }
+    return '/';
   }
 
   triggerMap() {

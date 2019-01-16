@@ -249,7 +249,7 @@ module.exports = class API3Scale {
       filePath: page.filePath,
       title: page.title,
       path: page.path,
-      layout: page.layout,
+      layout_name: page.layout,
       liquid_enabled: page.liquid_enabled,
       content_type: page.content_type,
       section_id: page.section_id,
