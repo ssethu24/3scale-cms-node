@@ -7,7 +7,11 @@ const WRK_DIR = config.get('contentRootPath');
 const action = 'flush';
 
 
-flush();
-upload(WRK_DIR);
+async function asyncInit() {
+  await flush();
+  await upload(WRK_DIR);
+}
 
-
+asyncInit().then(() => {
+  console.log("completed")
+})

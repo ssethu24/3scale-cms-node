@@ -5,7 +5,7 @@ const fse = require('fs-extra');
 const api = require('./api');
 const utils = require('./utils');
 const logger = require('./logger');
-const { Section, File, Layout, Partial } = require('./model');
+const { Section, File, Layout, Partial, BuiltinPage } = require('./model');
 
 async function getSectionByPath(sectionPath) {
   const section = Section.getSectionByPartialPath(sectionPath);
@@ -108,19 +108,42 @@ async function uploadFile(dir, baseDir) {
 };
 
 
+async function uploadBuiltinPage(dir) {
+  const metaFiles = utils.getMetaFileLocation(path.join(dir, '/builtin_page'));
+  for (const metaFile of metaFiles) {
+    const builtinPages = await fse.readJson(metaFile);
+    for (const builtinPage of builtinPages) {
+      const oldBuiltinPage = Partial.getBySystemName(builtinPage.system_name);
+      const dirPaths = metaFile.split('/');
+      dirPaths.pop();
+      builtinPage.filePath = path.join(dirPaths.join('/'), builtinPage.file_name);
+      if (oldBuiltinPage) {
+        logger.info("Update Partial", { systemName: builtinPage.system_name });
+        await api.updateBuiltinPage(oldBuiltinPage.id, builtinPage);
+      } else {
+        logger.error("You can't create builtIn Page", { systemName: builtinPage.system_name });
+      }
+    }
+  }
+}
+
+async function uploadPage(dir) {
+
+}
+
 async function upload(WRK_DIR) {
   let templates = await api.list('template');
   Layout.load(templates);
   Partial.load(templates);
+  BuiltinPage.load(templates);
   let destSections = await api.list('section');
   Section.load(destSections);
 
   await uploadLayouts(WRK_DIR);
   await uploadPartial(WRK_DIR);
 
-  /*
-  await iterateSource(`${WRK_DIR}/builtin_page`);
-  await iterateSource(`${WRK_DIR}/pages`);*/
+  await uploadBuiltinPage(WRK_DIR);
+  await uploadPage(WRK_DIR);
 
   let destFiles = await api.list('file');
   File.load(destFiles);
