@@ -2,6 +2,7 @@ const api = require('./api');
 const logger = require('./logger');
 
 const removeTypes = ['layout', 'partial', 'page', 'file', 'section'];
+// const removeTypes = ['page'];
 
 async function flush() {
   this.type = ['file', 'template', 'section'];

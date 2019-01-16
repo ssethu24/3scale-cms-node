@@ -19,14 +19,13 @@ module.exports = class Section extends Base {
 
   getTitlePathUtil(item) {
     let title = '';
-    if (item) {
-      if (_.isEmpty(item.parent_id)) {
-        title += ''
-      } else {
-        title += item.title + '/' + this.getTitlePathUtil(this.ID[item.parent_id]);
-      }
-      return title
+    if (!item.parent_id || isNaN(item.parent_id)) {
+      title += ''
+    } else {
+      title += item.title + '/' + this.getTitlePathUtil(this.ID[item.parent_id]);
     }
+    console.log(title);
+    return title
   }
 
   getTitlePath(item) {
@@ -59,10 +58,11 @@ module.exports = class Section extends Base {
     } else {
       this.sections.push(section);
     }
-    this.ID[section.id] = section;
-    this.SN[section.system_name] = section;
-    this.PP[section.partial_path] = section;
-    this.TITLE_PATH[section.titlePath] = section;
+    this.triggerMap();
+    /*    this.ID[section.id] = section;
+        this.SN[section.system_name] = section;
+        this.PP[section.partial_path] = section;
+        this.TITLE_PATH[section.titlePath] = section;*/
   }
 
   //Key should be id or sn

@@ -30,7 +30,7 @@ async function getSectionByPath(sectionPath, isTitle = false) {
       system_name: systemName,
     };
     const newSession = await api.createSection(section);
-    if (newSession) {
+    if (newSession.id) {
       Section.addOrUpdateSection(newSession);
     }
     return newSession;
@@ -163,10 +163,12 @@ async function upload(WRK_DIR) {
   let destSections = await api.list('section');
   Section.load(destSections);
 
+
   await uploadLayouts(WRK_DIR);
   await uploadPartial(WRK_DIR);
 
   await uploadBuiltinPage(WRK_DIR);
+
 
   await uploadPage(WRK_DIR);
 
@@ -174,6 +176,7 @@ async function upload(WRK_DIR) {
   File.load(destFiles);
   const baseDirPath = path.join(WRK_DIR, '/files');
   await uploadFile(baseDirPath, baseDirPath);
+
 }
 
 module.exports = upload;
