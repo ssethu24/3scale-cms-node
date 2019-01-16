@@ -1,6 +1,6 @@
 const API = require('./api');
-const Section = require('./section');
-const Layout = require('./layout');
+const Section = require('./model/section');
+const Layout = require('./model/layout');
 const WRK_DIR = '../api-portal-documentation';
 const api = new API('https://3scale-uat13-admin.uat.bluescape.com', '35aa72cd8f9907e018a1d3f4d0818d9ca03d8e4dabfa719ea6df3ed27cfd3f94');
 const path = require('path');
@@ -24,8 +24,8 @@ const LAYOUT = new Layout();
 // api.updateTemplate({id: 528, section_id: "252"})
 // api.getTemplateById(449);
 // api.deleteTemplate({id: 449});
-// api.createFile({ path: '/test/api.js',downloadable: 0, file_path: 'api.js', downloadable:false });
-// api.updateFile({ id: '110', path: '/test/api.js', section_id: '204', file_path: 'api.js', downloadable: 1 });
+// api.createFile({ path: '/test/cms_api.js',downloadable: 0, file_path: 'cms_api.js', downloadable:false });
+// api.updateFile({ id: '110', path: '/test/cms_api.js', section_id: '204', file_path: 'cms_api.js', downloadable: 1 });
 // api.getFileById('110')
 //   .then((res) => {
 //     console.log(res)

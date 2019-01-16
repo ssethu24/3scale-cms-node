@@ -2,7 +2,7 @@ const fse = require('fs-extra');
 const path = require('path');
 const _ = require('lodash');
 const API = require('./api');
-const Section = require('./section');
+const Section = require('./model/section');
 const { getFileExt } = require('./utils');
 
 const WRK_DIR = '../api-portal-documentation';

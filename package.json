@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "upload": "node ./lib/upload.js",
-    "download": "node ./lib/download.js",
-    "flush": "node ./lib/flush.js",
-    "verify": "node ./lib/verify.js"
+    "upload": "node ./upload.js",
+    "download": "node ./download.js",
+    "flush": "node ./flush.js",
+    "verify": "node ./verify.js"
   },
   "dependencies": {
+    "common-logger": "git+ssh://git@github.com:Bluescape/common-logger.git#v0.1.6",
+    "convict": "^4.4.1",
+    "form-data": "^2.3.3",
     "fs-extra": "^7.0.1",
     "lodash": "^4.17.11",
-    "form-data": "^2.3.3",
     "node-fetch": "^2.3.0",
     "xml2json": "^0.11.2"
   }

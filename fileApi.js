@@ -1,8 +1,8 @@
 const WRK_DIR = '../api-portal-documentation';
 const fs = require('fs');
 const path = require('path');
-const Section = require('./section');
-const File = require('./file');
+const Section = require('./model/section');
+const File = require('./model/file');
 const API = require('./api');
 
 const api = new API('https://3scale-uat13-admin.uat.bluescape.com', '35aa72cd8f9907e018a1d3f4d0818d9ca03d8e4dabfa719ea6df3ed27cfd3f94');
