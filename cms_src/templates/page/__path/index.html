@@ -1,0 +1,76 @@
+<style>
+#home-header h3 {
+  line-height: 4rem;
+}
+  
+#home-header h4 {
+  line-height: 3rem;
+}
+  
+#home-header a.btn {
+  min-width: 150px;
+  margin: 3rem 0;
+  font-size: 16px;
+}
+</style>
+
+<header id="home-header" class="jumbotron page-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <h3 style="color: #FFF; text-align: center;">Integrate Bluescape with the tools that drive your organization’s creativity and productivity.</h3>
+        
+        <h4 style="color: #FFF; text-align: center;">We bring you guides, reference documentation, SDKs and support to help you succeed.</h4>
+        
+        <div style="text-align: center; font-size: larger;">
+          {% if current_user %}
+        	<a class="btn btn-primary" href="/overview" title="Get Started">
+              Get Started
+            </a>
+          {% else %}
+        	<a class="btn btn-primary" href="{{ urls.signup }}" title="Sign Up">
+              Sign Up
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section style="background-color: #FFF">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 col-md-offset-2">
+        <h4>Guides</h4>
+
+        <p>
+          <a href="/guides">Learn</a> the basics and graduate to advanced concepts in no time.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h4>API Reference</h4>
+
+        <p>
+          View <a href="/reference">reference</a> documentation for all of our APIs and authorization flows.
+        </p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 col-md-offset-2">
+        <h4>SDKs</h4>
+
+        <p>
+          Leverage libraries in your favorite languages to <a href="/tools/libraries">build</a> applications quickly.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h4>Support</h4>
+
+        <p>
+          Get the <a href="/support">help</a> you need from our FAQs, forums, and support system.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

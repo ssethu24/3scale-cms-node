@@ -63,18 +63,16 @@ module.exports = class API3Scale {
     }
 
     createFile(file) {
-        // console.log('cr', file)
         const form = new form_data();
         // form.append('downloadable', file.downloadable || 0);
         if (file.section_id) {
-            //  form.append('section_id', file.section_id);
+             form.append('section_id', file.section_id);
         }
         if (file.tag_list) {
-            //  form.append('tag_list', file.tag_list);
+             form.append('tag_list', file.tag_list);
         }
         form.append('attachment', fs.createReadStream(file.filePath));
-        form.append('path', '/safi/dp3');
-        //form.append('title', file.title);
+        form.append('path', file.path);
         return fetch(`${this.baseUrl}/${this.kindKey['file']}.json?access_token=${this.providerKey}`, {
             method: 'POST',
             headers: form.getHeaders(),
@@ -88,18 +86,16 @@ module.exports = class API3Scale {
     updateFile(id, file) {
         console.log(id, file);
         const form = new form_data();
-        form.append('downloadable', file.downloadable || 0);
+        /*form.append('downloadable', file.downloadable || 0);
         if (file.section_id) {
             form.append('section_id', file.section_id);
         }
         if (file.tag_list) {
             form.append('tag_list', file.tag_list);
         }
-        form.append('path', file.path);
+        form.append('path', file.path);*/
         form.append('attachment', fs.createReadStream(file.filePath));
-        form.append('title', file.title);
-        delete file.file_path;
-        console.log(`${this.baseUrl}/${this.kindKey['file']}/${file.id}.json?access_token=${this.providerKey}`);
+        //form.append('title', file.title);
         return fetch(`${this.baseUrl}/${this.kindKey['file']}/${id}.json?access_token=${this.providerKey}`, {
             method: 'PUT',
             headers: form.getHeaders(),
@@ -126,7 +122,7 @@ module.exports = class API3Scale {
             },
             body: JSON.stringify(section)
         }).then(res => res.json())
-            .then((result) => result);
+            .then((result) => result.section);
     }
 
     /*    updateParentIdSection(id, parentId) {

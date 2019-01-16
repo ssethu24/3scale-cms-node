@@ -1,0 +1,111 @@
+<h1>Permissions</h1>
+
+<h3>Organizations</h3>
+
+<p>
+  All members of an organization are assigned a role that governs the permissions they have to modify the organization. There are four role types in an organization - Owner, Admin, User and Guest.
+</p>
+
+<table class="table table-striped">
+  <tr>
+    <th></th>
+    <th>Access public workspaces</th>
+    <th>Create workspaces</th>
+    <th>Invite guests to workspaces</th>
+    <th>Add, delete, modify users</th>
+    <th>Approve guest invitations</th>
+    <th>Access to organizational settings</th>
+  </tr>
+  <tr>
+    <th>Owner</th>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <th>Admin</th>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <th>User</th>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <th>Guest</th>
+    <td>No, must be invited</td>
+    <td>No</td>
+    <td>No</td>
+    <td>No</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+</table>
+
+<h4>Owner</h4>
+
+<p>
+The owner of the organization has the ability to add, delete and modify users and update organizational settings.  They also have the same functionality as a user of the organization. The owner cannot be removed from the account, and they will always be an administrator for the account. Only the owner of the account can modify organization settings.
+</p>
+
+<h4>Admin</h4>
+
+<p>
+Admins have the same capabilities as the owner, except they cannot access the Organization Settings tab.  The owner and other admins can make any organization member an administrator by opening the user's settings and check the option for administrator.
+</p>
+
+<h4>User</h4>
+
+<p>
+  A User in an organization has the ability to view any public workspace shared with the organization, any private workspace they own or have been invited to, and they can create new workspaces. They can also invite collaborators into workspaces they own or to which they have “share” access.
+</p>
+
+<h4>Guest</h4>
+
+<p>
+  Guest users in an organization can only see the workspaces they have been invited to; they cannot see any public workspaces in the organization. In the workspaces that they have been invited to, they have the same abilities as a regular user.
+</p>
+
+<div class="well">
+  <strong>Additional Notes</strong>
+
+  <ul>
+    <li>
+      Bluescape users can be a User, Admin, or Owner in one organization and a Guest User in other organizations.</li>
+    <li>
+      In the context of an SSO organization, only Users authorized in the company’s Identity Provider (IdP) will be allowed access – for example, if an Admin adds a User who is not authorized in the IdP, they will receive an error when they try to log in.</li>
+  </ul>
+</div>
+
+<h3>Workspaces</h3>
+
+<p>
+When users are invited to collaborate on a workspace, the permissions they have to modify content and invite other users to the workspace are governed by the workspace role they are assigned. There are three role types in a workspace - Viewer, Editor, and Editor+.
+</p>
+
+<table class="table table-striped">
+  <tr>
+    <th>Viewer</th>
+    <td>This limits collaborators to only being able to view, interact, and download assets within the workspace. They cannot move, add, or delete assets nor can draw or erase. They cannot invite collaborators into the workspace.</td>
+  </tr>
+  <tr>
+    <th>Editor</th>
+    <td>This allows users to fully collaborate within the space with no restrictions on adding, removing, or manipulating the workspace. They cannot invite collaborators into the workspace.</td>
+  </tr>
+  <tr>
+    <th>Editor+</th>
+    <td>This allows users to fully collaborate within the space with no restrictions on adding, removing, or manipulating the workspace. They can invite collaborators into the workspace.</td>
+  </tr>
+</table>

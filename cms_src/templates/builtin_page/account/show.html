@@ -1,0 +1,41 @@
+<!--- include 'users_menu' --->
+    
+<div class="row">
+  
+  <div id="menu" class="col-md-2">
+  	{% include 'account/menu' %}
+  </div>
+  
+  <div id="content" class="col-md-8">
+    
+    <div class="content-header">
+      <h1>Settings</h1>
+      
+	  <div class="btn-group">
+        {% if current_account.can.be_updated? %}
+        <a href="{{ current_account.edit_url }}" class="btn btn-primary header-btn">
+          <i class="fa fa-pencil"></i>
+          Edit Settings
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    
+    <table class="table table-striped">
+      {% for field in current_account.fields %}
+        {% if field.value != "" and field.visible? %}
+	      <tr>
+    	    <th>{{ field.label }}</th>
+	        <td>{{ field }}</td>
+	      </tr>
+        {% endif %}
+      {% endfor %}
+      
+      <tr>
+        <th>{{ current_account.admin.fields.email.label }}</th>
+        <td>{{ current_account.admin.email }}</td>
+      </tr>
+    </table>
+
+  </div>
+</div>

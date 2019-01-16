@@ -1,0 +1,14 @@
+[
+  {
+    "id": "469896",
+    "created_at": "2018-07-19T11:34:26-07:00",
+    "updated_at": "2018-07-19T11:34:26-07:00",
+    "section_id": "2318889",
+    "path": "/css/api-explorer1.css",
+    "url": "https://s3.amazonaws.com/enterprise-multitenant.3scale.net.3scale.net/bluescape/2018/07/19/app.f7a86ff428acfc06ede41abb9ee1ab14-0aecbbe78f69a078.css?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIRYLTWBQ37ZNGBZA%2F20190110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20190110T183155Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=b85388069eb56ac2ad693edb330e10c11bf7676a2726177f3ba0df77fc982518",
+    "tag_list": "test2",
+    "title": "app.f7a86ff428acfc06ede41abb9ee1ab14.css",
+    "_type": "file",
+    "_parenntType": "file"
+  }
+]

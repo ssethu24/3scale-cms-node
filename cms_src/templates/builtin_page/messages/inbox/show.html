@@ -1,0 +1,60 @@
+<div class="row">
+  
+  <div id="menu" class="col-md-2">
+    
+    {% include 'account/menu' %}
+    
+  </div>
+  
+  <div id="content" class="col-md-8">
+	
+    <ol class="breadcrumb">
+      <li><a href="{{ urls.messages_inbox }}">Inbox</a></li>
+      <li class="active">Message</li>
+    </ol>
+    
+    <div class="content-header">
+	  <h1>Message</h1>
+      <div class="btn-group">
+        
+      </div>
+    </div>
+    
+    <div>
+      <dl class="dl-horizontal">
+        <dt>Subject</dt>
+        <dd>{{ message.subject }}</dd>
+        <dt>Received</dt>
+        <dd>from {{ message.sender }} on {{ message.created_at | date: "%b %d, %Y %I:%M %P %Z" }}</dd>
+        <dt>Message</dt>
+        <dd><pre class="message">{{ message.body }}</pre></dd>
+      </dl>
+    </div>
+
+    <div class="panel-footer important">
+      {% comment %} only embed reply form if there is a sender to reply to {% endcomment %}
+      {% if reply %}
+      {% form 'message.reply', reply, { class: 'form-horizontal' } %}
+      <div class="form-group">
+        <input id="reply_to" name="reply_to" type="hidden" value="{{ message.id }}">
+        <input type="hidden" name="message_subject" value="Re: {{message.subject}}">
+        <label class="col-md-3 control-label" for="message_body">Reply</label>
+        <div class="col-md-7">
+          <textarea id="message_body"
+                    name="message[body]"
+                    rows="10"
+                    class="form-control"
+                    tabindex="1"></textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-10">
+          <button type="submit" class="btn btn-primary pull-right" tabindex="3">Send reply</button>
+        </div>
+      </div>
+      {% endform %}
+      {% endif %}
+    </div>
+    
+  </div>
+</div>

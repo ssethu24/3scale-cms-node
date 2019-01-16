@@ -1,0 +1,199 @@
+<h1>Listeners</h1>
+
+<p>
+  Bluescape Listeners, commonly called webhooks, enable applications to receive notifications via HTTP POST whenever important changes happen inside of Bluescape workspaces and organizations. Applications register listeners by specifying a target (either a workspace or a specific object in a workspace) and a list of events they would like to be notified about. Until listeners are unregistered, Bluescape servers will continue to send notifications to the specified URLs with JSON-encoded data about each Bluescape event that occurs. Developing applications that respond to Bluescape activity in real-time in order to perform automated tasks and bridge to other systems could not be easier.
+</p>
+
+<h3>Requirements</h3>
+
+<p>
+  Because listeners are notified of Bluescape activity as soon as it happens, applications that implement listeners must be available 24/7, have a public IP address or domain name, and be ready to receive HTTP requests at the various URLs registered as listeners. For developers that want to register listeners and receive events on their local machines, services exist to expose local servers to the internet, including <a href="https://ngrok.com/" target="_blank">ngrok</a>, <a href="https://serveo.net/" target="_blank">serveo</a>, and <a href="https://pagekite.net/" target="_blank">pagekite</a>.
+</p>
+
+<h3>Use Case: Notifications</h3>
+
+<p>
+  Every project team has its established communication channels, and Bluescape Listeners are the perfect tool for dispatching notifications to project teams over any communication channel that has an API of its own. Imagine your application receives a notification from Bluescape about a document that was just uploaded to a workspace. With just a few lines of code, applications can request the list of users with access to that workspace and send them Slack notifications with a link to view the new document.
+</p>
+
+<img class="img-responsive center-block" src="/images/diagrams/usecase_slack">
+
+<h3>Event Types</h3>
+
+<p>
+  All notifications sent to listeners contain an event type denoting what kind of activity occurred in the workspace to trigger the notification. For example, the payload sent to a listener when a note is created in a workspace will have an event type of CREATE_NOTE. Here is an example of such a payload:
+</p>
+
+<pre>
+{
+  workspace_id: 'hf5aTv5fTfGyATSvoklO',
+  event:
+  {
+    id: '5b452d36a7b544001319ed04',
+    created_at: '2018-01-23T12:34:00.000Z',
+    type: 'CREATE_NOTE'
+  },
+  note:
+  {
+    id: '5b452d36d8456b69b4000001',
+    backgroundColor: 'Teal',
+    text: 'hi',
+    x: 0,
+    y: 1,
+    width: 560,
+    height: 320,
+    order: 1,
+    actualHeight: 320,
+    actualWidth: 560,
+    fontWeight: '400',
+    fontSize: '43px',
+    textTransform: 'inherit'
+  }
+}
+</pre>
+
+<p>
+  When <a href="/reference/apis#Listeners:createListener" target="_blank">creating listeners</a>, applications must specify which event types each listener should receive. Applications wishing to receive notifications about all event types in a workspace should specify <span class="pre">[ "ALL" ]</span>. Applications wishing to receive notifications about specific event types should specify the list of event types that are of interest. For example, specifying <span class="pre">[ "NOTE_CREATE", "NOTE_DELETE" ]</span> would ensure that a listener only receives notifications about the creation and deletion of notes in a workspace.
+</p>
+
+<p>
+  The full list of event types that can be subscribed to is available <a href="/reference/listener-events">here</a> in the Reference section.
+</p>
+
+<div class="well">
+  <strong>NOTE:</strong> At this point, we only support listening for the creation, deletion and update of content inside workspaces. We are actively working on the ability to define listeners for organizations, users, and workspaces. Once these are released, applications will be able to respond to things like members being added and removed and workspaces being created, deleted, published, and shared.
+</div>
+
+<h3>Listener Targets</h3>
+
+<p>
+  Listeners can be attached to workspaces in general or to specific objects within a workspace. When a listener is attached to a workspace (by providing only a <span class="pre">workspaceId</span> during creation), it will receive notifications about all events that occur in the workspace. When a listener is attached to a specific object, such as a document or note (by providing the object's ID as the <span class="pre">targetId</span>),  the listener will only receive notifications about that object.
+</p>
+
+<h4>Listener targeting all events in a workspace</h4>
+
+<p>Any objects created, updated or deleted in the workspace will trigger a notification.</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/listeners \
+  -H 'Authorization: Bearer eyJhbGciOi...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "http://sample-app.com/bluescape/listeners/incoming",
+    "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+    "eventTypes": ["ALL"]
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const body = {
+  "url": "http://sample-app.com/bluescape/listeners/incoming",
+  "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+  "eventTypes": ["ALL"]
+};
+
+client.createListener(body);
+</pre>
+
+<h4>Listener targeting the creation of new documents in a workspace</h4>
+
+<p>Only documents being added to the workspace will trigger a notification.</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/listeners \
+  -H 'Authorization: Bearer eyJhbGciOi...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "http://sample-app.com/bluescape/listeners/incoming",
+    "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+    "eventTypes": ["DOCUMENT_CREATE"]
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const body = {
+  "url": "http://sample-app.com/bluescape/listeners/incoming",
+  "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+  "eventTypes": ["DOCUMENT_CREATE"]
+};
+
+client.createListener(body);
+</pre>
+
+<h4>Listener targeting all actions on a specific document</h4>
+
+<p>Notifications will only be sent if the specific document is updated or deleted.</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/listeners \
+  -H 'Authorization: Bearer eyJhbGciOi...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "http://sample-app.com/bluescape/listeners/incoming",
+    "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+    "targetId": "5b4524f253f5c84952000001",  // the document ID
+    "eventTypes": ["ALL"]
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const body = {
+  "url": "http://sample-app.com/bluescape/listeners/incoming",
+  "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+  "targetId": "5b4524f253f5c84952000001",  // the document ID
+  "eventTypes": ["ALL"]
+};
+
+client.createListener(body);
+</pre>
+
+<h4>Listener targeting updates to a specific note</h4>
+
+<p>Notifications will only be sent if the specific note is updated.</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/listeners \
+  -H 'Authorization: Bearer eyJhbGciOi...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "http://sample-app.com/bluescape/listeners/incoming",
+    "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+    "targetId": "4b4524f253f5c84953022009",  // the note ID
+    "eventTypes": ["NOTE_UPDATE"]
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const body = {
+  "url": "http://sample-app.com/bluescape/listeners/incoming",
+  "workspaceId": "4Nkidyp3CpUQaotRx1gE",
+  "targetId": "4b4524f253f5c84953022009",  // the note ID
+  "eventTypes": ["NOTE_UPDATE"]
+};
+
+client.createListener(body);
+</pre>
+
+<h3>Listener States</h3>
+
+<p>
+  Listener states allow for existing listeners to be disabled without being deleted. When a listener is first created, it will have a state of <span class="pre">ACTIVE</span>. If an application wishes to temporarily disable notifications to that listener, it can update the listener's status to <span class="pre">IN_ACTIVE</span> using the <a href="/reference/apis#Listeners:updateListener">Update a Listener</a> operation. While <span class="pre">IN_ACTIVE</span>, the listener will not receive any notifications from Bluescape. A listener can be re-enabled by setting its status back to <span class="pre">ACTIVE</span>.
+</p>
+
+<p>
+  When listeners receive an HTTP POST from the Bluescape API, they are expected to return a <span class="pre">200</span> response code to indicate the notification was received successfully. If the Bluescape service does not receive a <span class="pre">200</span> response code, it will send the notification again, up to five times. If all attempts to send the notification fail, the Bluescape service will automatically set the listener's status to <span class="pre">SUSPENDED</span> and notifications will no longer be sent to that listener. In order to reactivate the listener, applications will need to set the listener's status back to <span class="pre">ACTIVE</span>.
+</p>
+
+<h3>Listener Verification</h3>
+
+<p>
+  When the api to <a href="/reference/apis#Listeners:createListener" target="_blank">create a listener</a> is called, Bluescape will immediately attempt to send a test payload to the <span class="pre">url</span> specified with an event type of <span class="pre">TEST_HOOK</span>. The creation of the listener will be successful only if Bluescape receives a <span class="pre">200</span> code in response.
+</p>

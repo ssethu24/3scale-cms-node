@@ -1,0 +1,21 @@
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    Bluescape authorization was successful! If this window does not close automatically, please close this window and return to the Access Token Tool to view your access token.
+  </div>
+</div>
+
+<script>   
+  const params = {};
+  const queryString = window.location.hash.substring(1);
+  const regex = /([^&=]+)=([^&]*)/g;
+
+  let match;
+
+  while (match = regex.exec(queryString)) {
+    params[match[1]] = match[2];
+  }
+  
+  window.opener.handleAccessToken(params.access_token);
+  window.opener.focus();
+  window.close();
+</script>

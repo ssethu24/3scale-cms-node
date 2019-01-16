@@ -1,0 +1,259 @@
+<h1>Basic API Requests</h1>
+
+<p>
+  <em>
+    This guide assumes you have obtained an access token from an authorized user. You can obtain an access token either by completing the OAuth flow (see the <a href="/guides/user-auth">User Authentication</a> guide)  or by using the <a href="/tools/access-token">Access Token Generator</a> to generate a token using your own Bluescape login information.
+  </em>
+</p>
+
+<h3>The Base URL</h3>
+
+<p>
+  All API endpoints share the same base URL:
+</p>
+
+<pre>
+https://api.apps.us.bluescape.com
+</pre>
+
+<h3>Assembling a Request</h3>
+
+<h4>URL</h4>
+
+<p>
+  A request URL is assembled from the base URL and the <strong>path</strong> information for an operation as found in the reference. For example, <a href="/reference/apis#Organizations:addOrganizationUser" target="_blank">Add a User to an Organization</a> is an operation with path <span class="pre">/organizations/&lt;organization_id&gt;/users</span>. Combining this path with the base URL gives us a request URL of:
+</p>
+
+<pre>
+https://api.apps.us.bluescape.com/organizations/&lt;organization_id&gt;/users
+</pre>
+
+<h4>Parameters</h4>
+
+<p>
+  The path for the operation above, like many in the Bluescape API, contains a parameter. Adding a user to an organization requires we identify the organization to which the new user should be invited. To finish preparing this request URL, we must replace <span class="pre">&lt;organization_id&gt;</span> with a valid organization ID, such as one obtained from the <a href="/reference/apis#Users:getUserOrganizations" target="_blank">List a User's Organizations</a> operation.  Replacing the parameter placeholder with a sample organization ID yields a request URL of:
+</p>
+
+<pre>
+https://api.apps.us.bluescape.com/organizations/18223/users
+</pre>
+
+<p>
+  In addition to path parameters, some requests will have query, body and form data parameters. Reviewing the documentation for Add a User to an Organization, we see that this operation has a JSON-format body parameter with a required <span class="pre">email</span> field. When an operation requires a body parameter, be sure to send your request with a <span class="pre">Content-Type</span> header of <span class="pre">application/json</span>. When a form data parameter is expected, be sure to send your request with a <span class="pre">Content-Type</span> header of <span class="pre">multipart/form-data</span>. A valid body for this request looks like:
+</p>
+
+<pre>
+{
+  "email": "michael.scott@bluescape.com"
+}
+</pre>
+
+<h4>Authorization Header</h4>
+
+<p>
+  Lastly, all operations require an <strong>Authorization</strong> header based on the access tokens received from the OAuth flow. The value of this header should match the format of <span class="pre">Bearer &lt;access-token&gt;</span>.
+</p>
+
+<h4>Assembled Request</h4>
+
+<p>
+  Putting this all together, a request to Add a User to an Organization looks like:
+</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/organizations/18223/users \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3d...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "michael.scott@bluescape.com"
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const accessToken = 'eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3d...';
+const options = {
+    authorization: `Bearer ${accessToken}`
+};
+const organizationID = 18223;
+const body = { 
+    email: "michael.scott@bluescape.com" 
+};
+
+const client = new Bluescape(options);
+client.addOrganizationUser(organizationID, body);
+</pre>
+
+<h3>Example Request Flow</h3>
+
+<p>
+  Let's walk through assembling and sending a chain of requests that will result in creating a new note in a workspace. Starting with just an access token, we will 1) request the ID of the user connected to the access token, 2) use the user's ID to request a list of workspaces that the user has access to, and 3) create a note in one of those workspaces.
+</p>
+
+<h4>Get the Authenticated User</h4>
+
+<p>
+  First, let's request information about the user associated to the access token you have so we can get their user ID. We will use the <a href="/reference/apis#Users:getAuthenticatedUser" target="_blank">Get Authenticated User</a> endpoint. This operation has no parameters.
+</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X GET https://api.apps.us.bluescape.com/session/user \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3d...'
+</pre>
+
+<pre class="lang lang-javascript">
+client.getAuthenticatedUser();
+</pre>
+
+<p>
+  You should receive a response similar to:
+</p>
+
+<pre>
+{
+    "user": {
+        "id": 15055,
+        "email": "dwight.schrute@bluescape.com",
+        "first_name": "Dwight",
+        "last_name": "Schrute",
+        "title": null,
+        "industry": "Technology",
+        "phone_number": "3104295040",
+        "locked_at": null,
+        "archived": false,
+        "avatar_url": null,
+        "created_at": "2017-04-07T22:49:20.000Z",
+        "updated_at": "2018-06-26T20:47:53.000Z",
+        "application_role": {
+            "id": 2,
+            "name": "User",
+            "role_type": "user",
+            "is_default": true,
+            "display_order": 2,
+            "can_list_users": false,
+            ...
+        },
+        "user_preference": {
+            "notify_on_new_message": true
+        }
+    }
+}
+</pre>
+
+<p>
+  Among the details returned by the API about this user, we can see the user ID at the path <span class="pre">user.id</span> which we can use for requests that contain a <span class="pre">user_id</span> parameter in their path.
+</p>
+
+<h4>Get the User's Workspaces</h4>
+
+<p>
+  Now, let's request a list of workspaces this user has access to. Be sure to replace the <span class="pre">&lt;user_id&gt;</span> path parameter with the user ID you received from the previous request. The operation to <a href="/reference/apis#Users:getUserWorkspaces" target="_blank">List a User's Workspaces</a> has no other parameters.
+</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X GET https://api.apps.us.bluescape.com/users/15055/workspaces \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3d...'
+</pre>
+
+<pre class="lang lang-javascript">
+const userID = 15055;
+
+client.getUserWorkspaces(userID);
+</pre>
+
+<p>
+  You should receive a response similar to:
+</p>
+
+<pre>
+{
+    "total": 50,
+    "limit": 25,
+    "offset": 0,
+    "size": 25,
+    "paging": {
+        "prev": null,
+        "self": "/api/users/15055/workspaces?order_by=&order_direction=ASC&limit=25&offset=0",
+        "next": "/api/users/15055/workspaces?order_by=&order_direction=ASC&limit=25&offset=25"
+    },
+    "workspaces": [
+        {
+            "id": "31231",
+            "uid": "jyUEbzzKgaXYvBkfypBg",
+            "name": "Alpha Project",
+            "description": "",
+            "company_id": 4,
+            "public": true,
+            ...
+        },
+        ...
+    ]
+}
+</pre>
+
+<h4>Create a Note in a Workspace</h4>
+
+<p>
+  Finally, let's use one of the workspace UIDs we received in the previous response to create a new note. We will replace the <span class="pre">workspace_id</span> parameter in the path with a UID for the <a href="/reference/apis#Notes:addNoteToWorkspace" target="_blank">Create a Note</a> operation, and provide a JSON-format body indicating the text, background color, and position of the note we want to create.
+</p>
+
+{% include 'lang-selector' %}
+
+<pre class="lang lang-curl">
+curl -X POST https://api.apps.us.bluescape.com/workspaces/jyUEbzzKgaXYvBkfypBg/notes \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Imp3d...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "x": 0,
+    "y": 0,
+    "text": "The Bluescape API is fun!",
+    "backgroundColor": "Red"
+  }'
+</pre>
+
+<pre class="lang lang-javascript">
+const workspaceID = "jyUEbzzKgaXYvBkfypBg";
+const body = {
+    "x": 0,
+    "y": 0,
+    "text": "The Bluescape API is fun!",
+    "backgroundColor": "Red"
+  };
+  
+client.addNoteToWorkspace(workspaceID, body);
+</pre>
+
+<p>
+  You should receive a response similar to:
+</p>
+
+<pre>
+{
+   "note": {
+     "id": "5b4524f253f5c84952000002",
+     "x": 0,
+     "y": 0,
+     "text": "The Bluescape API is fun!",
+     "fontWeight": "normal",
+     "textTransform": "none",
+     "backgroundColor": "Red",
+     "pin": false,
+     "scale": 1
+   }
+}
+</pre>
+
+<p>
+  This response indicates a note was created as requested. Save this note ID for use in operations that can use one, such as <a href="/reference/apis#Notes:updateNote" target="_blank">Update a Note</a> or <a href="/reference/apis#Listeners:createListener" target="_blank">Create a Listener</a>. Open the workspace you specified, and check for your new note in the center. Congratulations, you've created Bluescape content using the Bluescape API.
+</p>
+
+<h3>Next Steps</h3>
+
+<p>
+  Go for it! Now that you have successfully requested information from Bluescape and made changes to a workspace, you should be comfortable taking advantage of all the functionality offered by the Bluescape API. Check out the <a href="/reference">API reference</a> for the full list of endpoints available to your application.
+</p>

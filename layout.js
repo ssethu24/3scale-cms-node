@@ -11,7 +11,7 @@ module.exports = class Layout {
 
   load(layouts) {
     if (Array.isArray(layouts) && !_.isEmpty(layouts)) {
-      this.layouts = layouts.filter_by(layout => layout._type = 'layout');
+      this.layouts = layouts.filter(layout => layout._type = 'layout');
       this.triggerMap();
     }
   }

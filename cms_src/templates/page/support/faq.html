@@ -1,0 +1,71 @@
+<div class="row">
+
+  <div id="menu" class="col-md-2">
+    {% include 'support/menu' %}
+  </div>
+
+  <div id="content" class="col-md-8">
+
+    <h1>FAQ</h1>
+
+    <h3>How do I set up my developer environment?</h3>
+
+    <p>
+    There's no explicit sandbox or developer environment available to work against. During development, test your applications with workspaces that are not being used for real work. Once you are confident that content is being created correctly, switch your applications to connect with the workspaces your organization uses regularly.
+    </p>
+
+    <p>
+    Connecting to the Bluescape APIs can be done from any client or server application that is able to send HTTP requests to our servers. In order to use our SDKs you will need to be comfortable setting up the environment for the programming language you choose to use.
+    </p>
+    
+    <p>
+    Taking advantage of our listeners requires some special setup and is discussed in the Requirements section of the <a href="/guides/listeners">Listeners</a> guide.
+    </p>
+
+    <h3>Is Bluescape down?</h3>
+
+    <p>
+    We are dedicated to keeping Bluescape's services fully functional for users and developers at all times. In the unfortunate event that you're having trouble connecting to your workspaces or our API, here are some steps you can take to determine the state of the situation:
+    </p>
+
+    <ol>
+      <li>Check <a href="https://support.bluescape.com" target="_blank">https://support.bluescape.com</a> for any service disruption advisories.</li>
+      <li>Send a simple HTTP GET to the <a href="https://health.apps.us.bluescape.com" target="_blank">https://health.apps.us.bluescape.com</a> API method. A HTTP 200 application/json response of {"ok":true} indicates at least part of the Bluescape Service is available.</li>
+      <li>Still unsure if Bluescape is down? Contact our enthusiastic support team by emailing us at {{ provider.support_email | mail_to }}.</li>
+    </ol>
+
+    <h3>How do I authenticate my requests to Bluescape?</h3>
+
+    <p>
+    When working with the Bluescape API, you are responsible for user authentication. Requests made against the Bluescape API are done by registered applications on behalf of users. Bluescape uses OAuth 2.0 to enable users to authorize applications to query the API on their behalf. Applications that have been authorized by users are given access tokens to use when accessing the API. These access tokens must be included in API requests.
+    </p>
+
+    <p>
+      Please visit the <a href="/guides/user-auth">User Authentication</a> guide for more information.
+    </p>
+
+    <h3>Is the Bluescape API rate limited?</h3>
+
+    <p>
+      Bluescape does apply rate limiting to the API in order to ensure that all clients are able to communicate quickly and reliably with our services. Currently, applications are limited to 200 requests per minute. You will receive a <span class="pre">429</span> Too Many Requests response when you have surpassed this limit and will then need to wait for the next rate limiting window to open. We are working on an update to the Bluescape APIs that will return information in the response headers about how much quota is available to your application and when the rate limit will reset.
+    </p>
+
+    <p>
+    You may find that you can't perform certain bursty actions, like attempting to create a large amount of content quickly during a nightly process. Our recommendation is to attempt to slow down the process of issuing API calls. If that is difficult or you can't seem to work within the established limits, contact us to discuss your specific situation.
+    </p>
+    
+    <h3>Positioning using the APIs does not seem to match what I see in the Bluescape client. Am I missing something?</h3>
+
+    <p>
+      You are absolutely right! While horizontal positioning along the X axis is consistent between the client and the API, vertical positioning along the Y axis is not. In the Bluescape client, the Y axis increases in value as you scroll up and decreases as you scroll down, but when using the APIs, positioning an object higher up requires that you reduce the Y value and positioning an object lower down requires that you increase the Y value. The thing to know about our positioning system is that it is indeed built on a <a href="https://en.wikipedia.org/wiki/Cartesian_coordinate_system" target="_blank">Cartesian coordinate system</a>. At some point in the near future, we intend to modify our clients to reflect the truth, and display numbers increasing as you scroll down.
+    </p>
+
+    <h3>How do I cancel/delete my account?</h3>
+
+    <p>
+      Please email our support team at {{ provider.support_email | mail_to }} if you have any problems with your account or you would like to cancel it.
+    </p>
+
+  </div>
+
+</div>

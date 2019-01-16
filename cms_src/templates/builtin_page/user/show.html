@@ -1,0 +1,62 @@
+<div class="row">
+  
+  <div id="menu" class="col-md-2">
+    
+    {% include 'account/menu' %}
+    
+  </div>
+  
+  <div id="content" class="col-md-8">
+	
+    <div style="position: relative">
+      <h1>Profile</h1>
+    </div>
+    
+    <div>
+      {% form 'user.personal_details', user, class: "form-horizontal" %}
+      <fieldset>
+        {% for field in user.fields %}
+        {% include 'field' with field %}
+        {% endfor %}
+      </fieldset>
+
+      <fieldset>
+        <div class="form-group {{ user.errors.password | error_class: 'has-error' }}">
+          <label for="user_password_confirmation" class="col-md-4 control-label">
+            Password
+          </label>
+          <div class="col-md-6">
+            <input id="user_password"
+                   name="user[password]" type="password"
+                   class="form-control">
+            {{ user.errors.password | inline_errors: 'help-block' }}
+          </div>
+        </div>
+
+
+        <div class="form-group {{ user.errors.password_confirmation | error_class: 'has-error' }}">
+          <label for="user_password_confirmation" class="col-md-4 control-label">
+            Password confirmation
+          </label>
+          <div class="col-md-6">
+            <input id="user_password_confirmation"
+                   name="user[password_confirmation]"
+                   type="password"
+                   class="form-control" >
+            {{ user.errors.password_confirmation | inline_errors: 'help-block' }}
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="form-group">
+          <div class="col-md-10">
+            <input class="btn btn-primary pull-right" name="commit" type="submit" value="Update Profile">
+          </div>
+        </div>
+      </fieldset>
+      {% endform %}
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,43 @@
+<input type="hidden" id="cinstance_plan_id" name="application[plan_id]" value="{{ application.plan.id }}" />
+
+{% if application.can_change_plan? %}
+  <fieldset>
+    <div class="form-group" id="selected-plan" data-plan-id="{{ application.plan.id }}">
+      <label class="control-label col-md-4">Plan</label>
+      <div class="col-md-6">
+        <p class="form-control-static">
+            <strong id='selected-plan-name'>{{application.plan.name}}</strong>
+              <span>› </span>
+              <a href="#choose-plan-{{ application.id }}" id="choose-plan-{{application.id}}">
+                Review/Change
+              </a>
+              {% plan_widget application, wizard: true %}
+              {{ '/css/plans_widget_overrides.css' | stylesheet_link_tag }}
+          </p>
+      </div>
+    </div>
+  </fieldset>
+{% endif %}
+
+<fieldset>
+  {% for field in application.fields %}
+    {% include 'field' with field %}
+  {% endfor %}
+  
+  <div class="form-group ">
+    <label class="col-md-4 control-label" for="application_redirect_url">
+      Redirect URI
+    </label>
+    <div class="col-md-6">
+      <input type="text" 
+             name="application[redirect_url]" 
+             id="application_redirect_url" 
+             value="{{ application.redirect_url }}" 
+             class="form-control {{ application.errors.redirect_url | error_class }}">
+      {{ application.errors.redirect_url | inline_errors }}
+    </div>
+  </div>
+  
+</fieldset>
+
+{% include 'new_application_licence' %}

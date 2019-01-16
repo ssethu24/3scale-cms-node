@@ -1,6 +1,13 @@
 {
   "name": "3scale-cms-node",
   "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "upload": "node ./lib/upload.js",
+    "download": "node ./lib/download.js",
+    "flush": "node ./lib/flush.js",
+    "verify": "node ./lib/verify.js"
+  },
   "dependencies": {
     "fs-extra": "^7.0.1",
     "lodash": "^4.17.11",

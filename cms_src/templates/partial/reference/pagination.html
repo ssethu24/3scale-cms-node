@@ -1,0 +1,81 @@
+<h1>Pagination</h1>
+
+<p>
+API endpoints that can return large numbers of objects return their results using an offset-based paging mechanism to improve performance. Applications are able to specify <span class="pre">limit</span> and <span class="pre">offset</span> query parameters to control what subset of the results are returned to them. 
+</p>
+
+<ul>
+  <li>The <span class="pre">limit</span> parameter sets a maximum number of results to return per call.</li>
+  <li>The <span class="pre">limit</span> parameter defaults to a value of 25</li>
+  <li>The <span class="pre">limit</span> parameter has a maximum value of 200</li>
+  <li>The <span class="pre">offset</span> parameter defines the number of resources in the collection to skip before assembling the results array</li>
+  <li>The <span class="pre">offset</span> parameter defaults to 0</li>
+</ul>
+
+<p>
+  To fetch the first set of entries, call the endpoint with <span class="pre">offset = 0</span> and <span class="pre">limit = &lt;your-limit&gt;</span>. To fetch the next set of entries, call the endpoint with <span class="pre">offset = &lt;previous-offset&gt; + &lt;previous-limit&gt;</span>. Note that you should increment the offset by the limit that is returned in the response object, not by the limit you passed in the query parameter or size of the results array. If <span class="pre">&lt;previous-offset&gt; + &lt;previous-limit&gt; >= total</span>, then you have retrieved all of the entries and there are no more to fetch. Note that the total may change between API calls, so always use the most recent values.
+</p>
+
+<h3>A sample request</h3>
+
+<p>
+  For an application displaying an organization's workspaces 10 records at a time, the query for page 2 would look like:
+</p>
+
+<pre>
+/api/organizations/1/workspaces?offset=10&limit=10
+</pre>
+
+<p>
+  Endpoints that support paging return the requested data as well as additional information related to paging:
+</p>
+
+<ul>
+  <li>the set of results</li>
+  <li>the <span class="pre">offset</span> specified in the query</li>
+  <li>the <span class="pre">limit</span> specified in the query</li>
+  <li>the <span class="pre">size</span> of the result set returned by the query</li>
+  <li>the <span class="pre">total</span> number of resources available in the collection</li>
+  <li>a <span class="pre">paging</span> object containing prepared queries for your convenience:
+    <ul>
+      <li>the <span class="pre">self</span> URL reflects the request that generated this response</li>
+      <li>the <span class="pre">next</span> URL can be used to request the next page of results</li>
+      <li>the <span class="pre">prev</span> URL can be used to request the previous page of results</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>A sample response</h3>
+
+<pre>
+{
+ "workspaces": [    // the results array
+   {
+     "id": "4Nkidyp3CpUQaotRx1gE",
+     "name": "Workspace 1",
+     ...
+   },
+   {
+     "id": "EUYYqLMUzLp5vww_z-mf",
+     "name": "Workspace 2",
+     ...
+   },
+   ...
+ ],
+ "limit": 10,        // the query requested a maximum of 10 results
+ "offset": 10,       // the query requested to skip the first 10 workspaces (page 1)
+ "size": 10,         // the number of results returned for this query
+ "total": 50,        // the number of workspaces available in the organization
+ "paging": {
+   
+   // request URL for the previous page
+   "prev": "/api/organizations/1/workspaces?offset=0&limit=10",   
+   
+   // request URL for the current page
+   "self": "/api/organizations/1/workspaces?offset=10&limit=10",  
+   
+   // request URL for the next page
+   "next": "/api/organizations/1/workspaces?offset=20&limit=10",  
+ }
+}
+</pre>
